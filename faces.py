@@ -10,9 +10,8 @@ class EigenFaces(object):
     """
 
     """
-    def __init__(self, image_database):
+    def __init__(self):
         super(EigenFaces, self).__init__()
-        self.imdb = image_database
 
         self.image_dimensions = (360, 256)
 
@@ -58,7 +57,7 @@ class EigenFaces(object):
 
         return np.hsplit(vectors, vectors.shape[1])
 
-    def show_eigenfaces(self, limit=16):
+    def show_eigenfaces(self, images, limit=16):
         """
         Display some number of eigenfaces corresponding to the largest eigenvalues
         for a training set in the specified directory.
@@ -74,7 +73,8 @@ class EigenFaces(object):
 
 
         fig, axes = plt.subplots(rows, cols)
-        for i, image in images:
+
+        for i, image in enumerate(images):
             a, b = i / cols, i % cols
             axes[a, b].imshow(image, cmap=plt.cm.gray)
             axes[a, b].set_axis_off()
@@ -82,4 +82,16 @@ class EigenFaces(object):
 
 
 if __name__ == '__main__':
-    show_eigenfaces('../database')
+    from imagedatabase import ImageDatabase
+
+    imdb = ImageDatabase(directory="/media/wolf/Shared/Dropbox/2016/QEA/2-Faces/faces")
+
+    e_faces = EigenFaces()
+
+    # e_faces.show_eigenfaces(imdb)
+
+    # for emotion in imdb.iterate_emotions():
+    #     e_faces.show_eigenfaces(emotion)
+
+    for person in imdb.iterate_people():
+        e_faces.show_eigenfaces(person)
