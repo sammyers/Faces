@@ -7,7 +7,11 @@ import numpy as np
 import scipy
 
 class ImageDatabase(object):
-    """docstring for ImageDatabase"""
+    """
+    ImageDatabase
+
+    Provides helper functionality for dealing with a folder of images
+    """
     image_filetype = "png"
     use_grayscale = True
     image_caching = True
@@ -78,6 +82,10 @@ class ImageDatabase(object):
             yield self[img]
 
 
+    def _get_split_filenames(self):
+        return [f_name.split(split_char) for f_name in self.image_list]
+
+
     def _get_people_set(self):
         """
         Make some assumptions about the images in the directory:
@@ -85,12 +93,15 @@ class ImageDatabase(object):
         - There are going to be an equal number of images of each person
         - The names of the images are of the format "x_name_magnitude.type"
         """
-        split_f_names = [f_name.split(split_char) for f_name in self.image_list]
+        split_f_names = self._get_split_filenames()
 
         return set(split_f_names[:, name_idx])
 
-
-    def iterate_people(self):
+    def _iterate_people_helper(self):
+        """
+        Yields the list of split filenames for each person in the image database,
+        for use in the iterate_people method and iterate_emotions method
+        """
         people = _get_people_set()
 
         for person in people:
@@ -99,20 +110,22 @@ class ImageDatabase(object):
                 split_f_names
             )
 
+            yield images_of_person
+
+    def iterate_people(self):
+        for images_of_person in self._iterate_people_helper():
+
             # rejoin split string and yield array of images of the person
             yield [self[f_name.join(split_char)] for f_name in images_of_person]
 
 
     def iterate_emotions(self):
-        split_f_names = self._split_filenames()
+        def make_matrix():
+            for split_f_name_list in self._iterate_people_helper():
+                yield [split_f_name.join(split_char) for split_f_name in split_f_name_list]
 
-        emotions = split_f_names
+        # [names x emotions]
+        filename_matrix = np.matrix([row for row in make_matrix()])
 
-        for person in people:
-            images_of_person = filter(
-                lambda split_f_name: split_f_name[name_idx] is person,
-                split_f_names
-            )
-
-            # rejoin split string and yield array of images of the person
-            yield [self[f_name.join(split_char)] for f_name in images_of_person]
+        for emotion in filename_matrix.T:
+            yield [self[img] for img in emotion]
