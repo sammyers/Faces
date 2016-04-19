@@ -49,7 +49,7 @@ class ImageDatabase(object):
 
 
     def _check_valid_directory(directory):
-        return (os.path.isdir(directory) &&
+        return (os.path.isdir(directory) and
             _images_in_directory(directory))
 
 
