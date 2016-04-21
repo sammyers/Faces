@@ -20,7 +20,7 @@ class ImageDatabase(object):
     """
 
 
-    def __init__(self, directory='face_images'):
+    def __init__(self, directory='face_images', caching=True):
         super(ImageDatabase, self).__init__()
 
         # Defines the image filetype extension to load
@@ -30,7 +30,7 @@ class ImageDatabase(object):
         self.use_grayscale = True
 
         # Cache images in a dictionary on load or reload every time?
-        self.image_caching = True
+        self.image_caching = caching
 
         # Image file basenames have information split by a character
         self.split_char = "_"
