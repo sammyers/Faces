@@ -162,7 +162,7 @@ class ImageDatabase(object):
 
             yield images_of_person
 
-    def iterate_people(self):
+    def people(self):
         """
         Iterate the images by person. Yields an array of images for each person.
         """
@@ -172,7 +172,7 @@ class ImageDatabase(object):
             yield [self[self.split_char.join(split_f_name)] for split_f_name in images_of_person]
 
 
-    def iterate_emotions(self):
+    def emotions(self):
         """
         Iterate the images by emotion. Yields an array of images for each emotion.
         """
@@ -186,20 +186,27 @@ class ImageDatabase(object):
         for emotion in filename_matrix.T:
             yield [self[img] for img in np.array(emotion)[0]]
 
+    def subset(self, remove='01'):
+        """
+        Default iteration method. Yields each image individually.
+        """
+        for img in filter(lambda x: remove not in x, self.image_list):
+            yield self[img]
+
 
 if __name__ == '__main__':
     imdb = ImageDatabase(directory="/media/wolf/Shared/Dropbox/2016/QEA/2-Faces/faces")
 
     import matplotlib.pyplot as plt
 
-    for emotion in imdb.iterate_emotions():
+    for emotion in imdb.emotions():
         for img in emotion:
             plt.imshow(img, cmap=plt.cm.gray)
             plt.show()
             break
         break
 
-    for person in imdb.iterate_people():
+    for person in imdb.people():
         for emotion in person:
             plt.imshow(img, cmap=plt.cm.gray)
             plt.show()
