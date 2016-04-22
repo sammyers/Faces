@@ -21,14 +21,13 @@ class EigenSpace(object):
 
         self.new_dimensions = (dimensions[0] / 4, dimensions[1] / 4)
 
-        self.images = images
+        self.images = list(images)
 
         self.image_vectors = [self.flatten(image) for image in self.images]
 
         self.average_face = self._average_face()
 
         self.eigenvectors = self.get_eigenvectors()
-
 
     def flatten(self, image):
         """
@@ -63,21 +62,23 @@ class EigenSpace(object):
         else:
             raise Exception("Undefined order: '{}'".format(order))
 
-    def get_eigenvectors(self):
+    def get_eigenvectors(self, limit=None):
         """
         Return a list of column vectors representing the eigenfaces of a set of images.
         """
         eigenthings = np.linalg.eig(self.get_covariance_matrix(self.image_vectors))
         vectors = self.normalize_faces(self.image_vectors) * eigenthings[1]
-
-        return vectors[:,:16]
+        if limit == None:
+            return vectors
+        else:
+            return vectors[:,:limit]
 
     def show_eigenfaces(self, limit=16):
         """
         Display some number of eigenfaces corresponding to the largest eigenvalues
         for a training set in the specified directory.
         """
-        vectors = np.hsplit(vectors, vectors.shape[1])
+        vectors = np.hsplit(self.eigenvectors, self.eigenvectors.shape[1])
         eigenfaces = [np.reshape(face, self.image_dimensions) for face in vectors]
         self.show_grid(eigenfaces[:limit - 1])
     
@@ -95,6 +96,7 @@ class EigenSpace(object):
 
     def get_weight_vector(self, image):
         # import pdb; pdb.set_trace()
+
         normalized = self.flatten(image).T[0] - self.average_face
         projection = np.dot(self.eigenvectors.T, normalized)#np.vstack([np.dot(vector, normalized) for vector in self.eigenvectors])
         return projection
@@ -106,20 +108,66 @@ class EigenSpace(object):
         """
         projection = self.get_weight_vector(image)
         # This assumes there is a match, update this later to include thresholds
-        import pdb; pdb.set_trace()
-        recognized = min(self.images, key=lambda x: euclidean(self.get_weight_vector(x), projection))
-        print euclidean(self.get_weight_vector(recognized), projection)
-        return recognized
 
-if __name__ == '__main__':
-    from imagedatabase import ImageDatabase
+        euclidean_distances = [euclidean(self.get_weight_vector(x), projection) for x in self.images]
 
-    imdb = ImageDatabase(directory="database", caching=False)
+        recognized_index, euclidean_distance = min(enumerate(euclidean_distances), key=lambda x: x[1])
+
+        recognized_image = self.images[recognized_index]
+
+        return (recognized_index, recognized_image, euclidean_distance)
+
+
+def recognize_face_example(imdb):
     all_faces = EigenSpace(imdb.subset(remove='01'))
 
     # for emotion in imdb.iterate_emotions():
     #     e_faces.show_eigenfaces(emotion)
     # all_faces.show_eigenfaces()
     danny = imdb['faceimage_dannyWolf_01.png']
-    plt.imshow(all_faces.recognize_face(danny), cmap=plt.cm.gray)
+
+    return all_faces.recognize_face(danny)
+
+def make_emotion_eigenspace(imdb):
+    eigenemotions = [EigenSpace(emotion) for emotion in imdb.emotions()]
+
+    return EigenSpace([np.reshape(e_emotion.get_eigenvectors(limit=1), (360, 256)) for e_emotion in eigenemotions])
+
+
+if __name__ == '__main__':
+    from imagedatabase import ImageDatabase
+
+    imdb = ImageDatabase(directory="database")
+
+    final_faces = ImageDatabase(directory="finalFaces")
+
+
+    e_space = EigenSpace(imdb)
+
+    print 'EigenSpace created'
+
+    # face_matches = []
+
+    # for i, f in enumerate(final_faces):
+    #     print 'recognizing {}'.format(i)
+    #     index, image, e_dist = e_space.recognize_face(f)
+    #     face_matches.append(np.hstack((image, f)))
+    #     plt.imshow(image, cmap=plt.cm.gray)
+    #     plt.show()
+    #     break
+
+    # import pdb; pdb.set_trace()
+
+    # e_space.show_grid(face_matches)
+
+
+    index, image, e_dist = e_space.recognize_face(final_faces['faceimage_nathanielYee_00.png'])
+
+    result = recognize_face_example(imdb)
+
+    e_space.show_eigenfaces()
+
+    print index
+
+    plt.imshow(image, cmap=plt.cm.gray)
     plt.show()
