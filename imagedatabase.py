@@ -6,6 +6,25 @@ import glob
 import numpy as np
 import scipy.misc
 
+
+class ImageIterator(object):
+    """
+    Simple iterator class.
+    """
+    def __init__(self, generator, length):
+        super(ImageIterator, self).__init__()
+        self.generator = generator
+        self.length = length
+
+    def __len__(self):
+        return self.length
+
+    def __iter__(self):
+        return self.generator()
+        
+        
+
+
 class ImageDatabase(object):
     """
     ImageDatabase
@@ -20,7 +39,7 @@ class ImageDatabase(object):
     """
 
 
-    def __init__(self, directory='face_images'):
+    def __init__(self, directory='face_images', caching=True):
         super(ImageDatabase, self).__init__()
 
         # Defines the image filetype extension to load
@@ -30,7 +49,7 @@ class ImageDatabase(object):
         self.use_grayscale = True
 
         # Cache images in a dictionary on load or reload every time?
-        self.image_caching = True
+        self.image_caching = caching
 
         # Image file basenames have information split by a character
         self.split_char = "_"
@@ -162,17 +181,19 @@ class ImageDatabase(object):
 
             yield images_of_person
 
-    def iterate_people(self):
+    def people(self):
         """
         Iterate the images by person. Yields an array of images for each person.
         """
-        for images_of_person in self._iterate_people_helper():
+        def people_generator():
+            for images_of_person in self._iterate_people_helper():
+                # rejoin split string and yield array of images of the person
+                yield [self[self.split_char.join(split_f_name)] for split_f_name in images_of_person]
 
-            # rejoin split string and yield array of images of the person
-            yield [self[self.split_char.join(split_f_name)] for split_f_name in images_of_person]
+        return ImageIterator(people_generator, len(self._get_people_set()))
 
 
-    def iterate_emotions(self):
+    def emotions(self):
         """
         Iterate the images by emotion. Yields an array of images for each emotion.
         """
@@ -183,23 +204,37 @@ class ImageDatabase(object):
         # [names x emotions]
         filename_matrix = np.matrix([row for row in make_matrix()])
 
-        for emotion in filename_matrix.T:
-            yield [self[img] for img in np.array(emotion)[0]]
+        def emotion_generator():
+            for emotion in filename_matrix.T:
+                yield [self[img] for img in np.array(emotion)[0]]
 
+        return ImageIterator(emotion_generator, filename_matrix.shape[1])
+
+    def subset(self, remove='01'):
+        """
+        Default iteration method. Yields each image individually.
+        """
+
+        filtered_list = filter(lambda x: remove not in x, self.image_list)
+        def subset_generator():
+            for img in filtered_list:
+                yield self[img]
+
+        return ImageIterator(subset_generator, len(filtered_list))
 
 if __name__ == '__main__':
     imdb = ImageDatabase(directory="/media/wolf/Shared/Dropbox/2016/QEA/2-Faces/faces")
 
     import matplotlib.pyplot as plt
 
-    for emotion in imdb.iterate_emotions():
+    for emotion in imdb.emotions():
         for img in emotion:
             plt.imshow(img, cmap=plt.cm.gray)
             plt.show()
             break
         break
 
-    for person in imdb.iterate_people():
+    for person in imdb.people():
         for emotion in person:
             plt.imshow(img, cmap=plt.cm.gray)
             plt.show()
