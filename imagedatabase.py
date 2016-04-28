@@ -55,6 +55,8 @@ class ImageDatabase(object):
         # None keeps image as is.
         self.resample = resample
 
+        self.img_size = resample if resample != None else (360, 256)
+
         # Image file basenames have information split by a character
         self.split_char = "_"
 
@@ -219,12 +221,12 @@ class ImageDatabase(object):
 
         return ImageIterator(emotion_generator, filename_matrix.shape[1])
 
-    def subset(self, remove='01'):
+    def subset(self, add='01'):
         """
         Default iteration method. Yields each image individually.
         """
 
-        filtered_list = [x for x in self.image_list if remove not in x]
+        filtered_list = [x for x in self.image_list if add in x]
         def subset_generator():
             for img in filtered_list:
                 yield self[img]

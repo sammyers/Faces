@@ -2,7 +2,6 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import sympy
 from scipy.ndimage import imread
 from scipy.misc import imresize
 import matplotlib.pyplot as plt
@@ -14,12 +13,10 @@ class EigenSpace(object):
     """
     An object representing the 'face space' for a set of images.
     """
-    def __init__(self, images, dimensions=(360, 256)):
+    def __init__(self, images, image_dimensions):
         super(EigenSpace, self).__init__()
 
-        self.image_dimensions = dimensions
-
-        self.new_dimensions = (dimensions[0] / 4, dimensions[1] / 4)
+        self.image_dimensions = image_dimensions
 
         self.images = list(images)
 
@@ -119,30 +116,30 @@ class EigenSpace(object):
 
 
 def recognize_face_example(imdb):
-    all_faces = EigenSpace(imdb.subset(remove='01'))
+    all_faces = EigenSpace(imdb.subset(add='01'), imdb.img_size)
 
     # for emotion in imdb.iterate_emotions():
     #     e_faces.show_eigenfaces(emotion)
     # all_faces.show_eigenfaces()
-    danny = imdb['faceimage_dannyWolf_01.png']
+    jared = imdb['faceimage_jaredBriskman_06.png']
 
-    return all_faces.recognize_face(danny)
+    return all_faces.recognize_face(jared)
 
 def make_emotion_eigenspace(imdb):
     eigenemotions = [EigenSpace(emotion) for emotion in imdb.emotions()]
 
-    return EigenSpace([np.reshape(e_emotion.get_eigenvectors(limit=1), (360, 256)) for e_emotion in eigenemotions])
+    return EigenSpace([np.reshape(e_emotion.get_eigenvectors(limit=1), imdb.img_size) for e_emotion in eigenemotions])
 
 
 if __name__ == '__main__':
     from imagedatabase import ImageDatabase
 
-    imdb = ImageDatabase(directory="database")
+    imdb = ImageDatabase(directory="database", resample=(90,64))
 
-    final_faces = ImageDatabase(directory="finalFaces")
+    # final_faces = ImageDatabase(directory="finalFaces")
 
-
-    e_space = EigenSpace(imdb)
+    subspace = imdb.subset(add='01')
+    e_space = EigenSpace(subspace, imdb.img_size)
 
     print 'EigenSpace created'
 
@@ -161,11 +158,11 @@ if __name__ == '__main__':
     # e_space.show_grid(face_matches)
 
 
-    index, image, e_dist = e_space.recognize_face(final_faces['faceimage_nathanielYee_00.png'])
+    index, image, e_dist = e_space.recognize_face(imdb['faceimage_jaredBriskman_06.png'])
 
     result = recognize_face_example(imdb)
 
-    e_space.show_eigenfaces()
+    e_space.show_eigenfaces(limit=len(subspace))
 
     print index
 
