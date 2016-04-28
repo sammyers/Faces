@@ -39,17 +39,21 @@ class ImageDatabase(object):
     """
 
 
-    def __init__(self, directory='face_images', caching=True):
+    def __init__(self, directory='face_images', image_filetype='png', use_grayscale=True, caching=True, resample=None):
         super(ImageDatabase, self).__init__()
 
         # Defines the image filetype extension to load
-        self.image_filetype = "png"
+        self.image_filetype = image_filetype
 
         # Convert the image to grayscale on load?
-        self.use_grayscale = True
+        self.use_grayscale = use_grayscale
 
         # Cache images in a dictionary on load or reload every time?
         self.image_caching = caching
+
+        # Resample images to (width, height) as defined by resample
+        # None keeps image as is.
+        self.resample = resample
 
         # Image file basenames have information split by a character
         self.split_char = "_"
@@ -105,10 +109,15 @@ class ImageDatabase(object):
         Loads an image using scipy into a numpy array,
         converts image into grayscale if setting enabled.
         """
-        return scipy.misc.imread(
+        img = scipy.misc.imread(
             os.path.join(self.directory, name),
             self.use_grayscale
         )
+
+        if self.resample != None:
+            img = scipy.misc.imresize(img, self.resample)
+
+        return img
 
 
     def __len__(self):
@@ -215,7 +224,7 @@ class ImageDatabase(object):
         Default iteration method. Yields each image individually.
         """
 
-        filtered_list = filter(lambda x: remove not in x, self.image_list)
+        filtered_list = [x for x in self.image_list if remove not in x]
         def subset_generator():
             for img in filtered_list:
                 yield self[img]
@@ -223,7 +232,7 @@ class ImageDatabase(object):
         return ImageIterator(subset_generator, len(filtered_list))
 
 if __name__ == '__main__':
-    imdb = ImageDatabase(directory="/media/wolf/Shared/Dropbox/2016/QEA/2-Faces/faces")
+    imdb = ImageDatabase(directory="database")
 
     import matplotlib.pyplot as plt
 
