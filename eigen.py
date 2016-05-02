@@ -72,6 +72,7 @@ if __name__ == '__main__':
     final_faces = ImageDatabase(directory="finalFaces")
 
 
+    # e_space = EigenSpace(imdb.subset(remove='01'))
     e_space = EigenSpace(imdb)
 
     print('EigenSpace created')
@@ -90,14 +91,23 @@ if __name__ == '__main__':
 
     # e_space.show_grid(face_matches)
 
+    # targets = list(imdb.subset(include='01'))
+    targets = final_faces
 
-    index, image, e_dist = e_space.recognize_face(final_faces['faceimage_nathanielYee_00.png'])
+    score = 0
+    matched = []
 
-    result = recognize_face_example(imdb)
+    for i, target in enumerate(targets):
 
-    e_space.show_eigenfaces()
+        index, image, e_dist = e_space.recognize_face(target)
 
-    print(index)
+        if i * 8 <= index < (i + 1) * 8:
+            score += 1
+        matched += [target, image]
 
-    plt.imshow(image, cmap=plt.cm.gray)
-    plt.show()
+        # e_space.show_eigenfaces()
+
+        # plt.imshow(image, cmap=plt.cm.gray)
+        # plt.show()    
+    print('{}/{}'.format(score, len(targets)))
+    e_space.show_grid(matched)
