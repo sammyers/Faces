@@ -20,7 +20,7 @@ class ImageIterator(object):
         return self.length
 
     def __iter__(self):
-        return self.generator()
+        return self.generator
         
         
 
@@ -196,10 +196,8 @@ class ImageDatabase(object):
         """
         Iterate the images by person. Yields an array of images for each person.
         """
-        def people_generator():
-            for images_of_person in self._iterate_people_helper():
-                # rejoin split string and yield array of images of the person
-                yield [self[self.split_char.join(split_f_name)] for split_f_name in images_of_person]
+
+        people_generator = ([self[self.split_char.join(split)] for split in images] for images in self._iterate_people_helper())
 
         return ImageIterator(people_generator, len(self._get_people_set()))
 
@@ -215,23 +213,27 @@ class ImageDatabase(object):
         # [names x emotions]
         filename_matrix = np.matrix([row for row in make_matrix()])
 
-        def emotion_generator():
-            for emotion in filename_matrix.T:
-                yield [self[img] for img in np.array(emotion)[0]]
+        emotion_generator = ([self[img] for img in np.array(emotion)[0]] for emotion in filename_matrix.T)
 
         return ImageIterator(emotion_generator, filename_matrix.shape[1])
 
-    def subset(self, add='01'):
+
+    def subset(self, include=None, remove=None):
         """
         Default iteration method. Yields each image individually.
         """
+        if include:
+            filtered_list = [x for x in self.image_list if include in x]
+        elif remove:
+            filtered_list = [x for x in self.image_list if remove not in x]
+        else:
+            filtered_list = [x for x in self.image_list]
 
-        filtered_list = [x for x in self.image_list if add in x]
-        def subset_generator():
-            for img in filtered_list:
-                yield self[img]
+        subset_generator = (self[img] for img in filtered_list)
 
         return ImageIterator(subset_generator, len(filtered_list))
+
+
 
 if __name__ == '__main__':
     imdb = ImageDatabase(directory="database")

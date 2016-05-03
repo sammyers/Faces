@@ -59,7 +59,7 @@ class FaceSpace(object):
     
     def show_grid(self, images):
         rows = int(math.floor(len(images) ** 0.5))
-        cols = len(images) // rows
+        cols = len(images) // rows + 1
 
         fig, axes = plt.subplots(rows, cols)
 
