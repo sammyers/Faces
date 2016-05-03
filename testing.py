@@ -103,7 +103,10 @@ class EigenfacesTest(TestMethod):
         for i, target in enumerate(targets):
 
             index, image, e_dist = self.eigenspace.recognize_face(target)
-            if index == i:
+
+            print i, index
+
+            if index / 7 == i:
                 score += 1
 
             matched.append(np.hstack((target,image)))
@@ -139,25 +142,25 @@ if __name__ == '__main__':
     ff = ImageDatabase(directory="finalFaces", resample=(90,64))
 
 
-    ff_tests = [EigenfacesTest("{}".format(n), get_nth_image(imdb, n, with_names=ff._get_people_set()), get_nth_image(ff, 0, with_names=ff._get_people_set())) for n in range(8)]
-    ff_test_suite = TestSuite("Face Recognition: Normal Set (n-th) vs. finalFaces", ff_tests, xlabel="n-th image from Normal set matched with finalFaces image")
-    ff_test_suite.run_tests()
-    ff_test_suite.bar_graph()
+    # ff_tests = [EigenfacesTest("{}".format(n), get_nth_image(imdb, n, with_names=ff._get_people_set()), get_nth_image(ff, 0, with_names=ff._get_people_set())) for n in range(8)]
+    # ff_test_suite = TestSuite("Face Recognition: Normal Set (n-th) vs. finalFaces", ff_tests, xlabel="n-th image from Normal set matched with finalFaces image")
+    # ff_test_suite.run_tests()
+    # ff_test_suite.bar_graph()
 
 
-    # one_minus_tests = []
-    # for n in range(8):
-    #     one_minus_tests.append(
-    #         EigenfacesTest(
-    #             "{}".format(n),
-    #             get_non_nth_image(imdb, n),
-    #             get_nth_image(imdb, n)
-    #         )
-    #     )
+    one_minus_tests = []
+    for n in range(8):
+        one_minus_tests.append(
+            EigenfacesTest(
+                "{}".format(n),
+                get_non_nth_image(imdb, n),
+                get_nth_image(imdb, n)
+            )
+        )
 
-    # one_minus_test_suite = TestSuite("Face Recognition: Normal Set (n-th) vs. Normal Set (m-th)", one_minus_tests, xlabel="Eigenspace created from every image besides n-th image from Normal set matched with n-th image from Normal set")
-    # one_minus_test_suite.run_tests()
-    # one_minus_test_suite.bar_graph()
+    one_minus_test_suite = TestSuite("Face Recognition: Normal Set Minus n-th vs. Normal Set n-th", one_minus_tests, xlabel="Eigenspace created from every image besides n-th image from Normal set\nmatched with n-th image from Normal set")
+    one_minus_test_suite.run_tests()
+    one_minus_test_suite.bar_graph()
 
 
 
