@@ -173,7 +173,7 @@ class ImageDatabase(object):
         return set([split_f_name[self.name_idx] for split_f_name in split_f_names])
 
 
-    def _iterate_people_helper(self):
+    def _iterate_people_helper(self, with_names=None):
         """
         Yields the list of split filenames for each image for each person in 
         the image database.
@@ -182,24 +182,29 @@ class ImageDatabase(object):
         """
         split_f_names = self._get_split_filenames()
 
-        people = self._get_people_set()
+        people = sorted(list(self._get_people_set()))
 
         for person in people:
-            images_of_person = filter(
-                lambda split_f_name: split_f_name[self.name_idx] == person,
-                split_f_names
-            )
+            if with_names == None or person in with_names:
+                images_of_person = filter(
+                    lambda split_f_name: split_f_name[self.name_idx] == person,
+                    split_f_names
+                )
 
-            yield images_of_person
+                yield images_of_person
 
-    def people(self):
+
+    def people(self, with_names=None):
         """
         Iterate the images by person. Yields an array of images for each person.
         """
 
-        people_generator = ([self[self.split_char.join(split)] for split in images] for images in self._iterate_people_helper())
+        people_generator = ([self[self.split_char.join(split)] for split in images] for images in self._iterate_people_helper(with_names=with_names))
 
         return ImageIterator(people_generator, len(self._get_people_set()))
+
+    def nth_of_person(self, index):
+        return [imgs[index] for imgs in self.people()]
 
 
     def emotions(self):
